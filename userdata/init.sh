@@ -1,26 +1,50 @@
 #!/bin/bash
 
-# Prereqs and docker
-sudo apt-get update &&
-    sudo apt-get install -yqq \
+# Prereqs and podman
+sudo useradd -s /bin/bash -d /home/piotrzurek -m -p '$y$j9T$NGxdHvMCddcVoBuL.vvR.0$YmJI.LC06iBF1F7rUkT1yBxdoNmVVCgNKKHgEc6zC92' piotrzurek &&
+sudo mkdir /home/piotrzurek/.ssh &&
+sudo mv /home/ubuntu/.ssh/authorized_keys /home/piotrzurek/.ssh/ &&
+sudo chown -R piotrzurek:piotrzurek /home/piotrzurek &&
+sudo adduser piotrzurek sudo &&
+sudo echo "APT::Install-Recommends \"false\";" >  /etc/apt/apt.conf.d/00-noreccomendations &&
+sudo apt update &&
+sudo apt purge -yqq\
+        *headers* \
+        multipath-tools \
+        ubuntu-server \
+        snapd \
+        open-iscsi \
+        telnet \
+        lxd-agent-loader \
+        pastebinit \
+        packagekit \
+        software-properties-common \
+        ubuntu-pro-client* \
+        ubuntu-advantage-tools &&
+sudo apt autoremove -yqq &&
+sudo apt full-upgrade -yqq &&
+sudo apt-get install -yqq \
+        unattended-upgrades \
+        tmux \
+        aptitude \
         curl \
         git \
         apt-transport-https \
         ca-certificates \
         gnupg-agent \
-        software-properties-common
-
-# Install Docker
-sudo curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo chmod +x get-docker.sh
-    sudo sh get-docker.sh
-
-# docker-compose
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.6.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose &&
-    sudo chmod +x /usr/local/bin/docker-compose &&
-    sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-
-# wirehole
-git clone https://github.com/IAmStoxe/wirehole.git &&
-    cd wirehole &&
-    sudo docker-compose up
+        openssh-server \
+        jq \
+        podman \
+        podman-docker \
+        cockpit\
+        cockpit-podman \
+        uidmap &&
+sudo hostnamectl hostname zurek.top &&
+export PUBLIC_IP=$(curl ident.me) &&
+sudo sh -c "echo '$PUBLIC_IP zurek.top zurek' >> /etc/hosts" &&
+sudo sh -c "echo 'Port 818' >> /etc/ssh/sshd_config" &&
+sudo iptables -I INPUT -p tcp -m tcp --dport 818 -j ACCEPT &&
+sudo systemctl restart ssh &&
+sudo userdel -f -r ubuntu &&
+sudo userdel -f -r opc &&
+sudo userdel -f -r snap_daemon
