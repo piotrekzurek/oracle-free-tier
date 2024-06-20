@@ -11,7 +11,7 @@ variable "user_ocid" {}
 variable "region" {}
 
 variable "instance_display_name" {
-  default = "WireHole"
+  default = "zurek"
 }
 
 variable "vcn_cidr_block" {
@@ -26,16 +26,19 @@ variable "availability_domain_number" {
 variable "instance_shape" {
   # Free-Tier is VM.Standard.E2.1.Micro
   # Flex-Tier (Free) is VM.Standard.A1.Flex
-  default = "VM.Standard.E2.1.Micro"
+#   default = "VM.Standard.A1.Flex"
+   default = "VM.Standard.E2.1.Micro"
 }
-#variable "instance_shape_config_memory_in_gbs" {
-#  default = "24"
-#}
-#variable "instance_shape_config_ocpus" {
-#  default = "4"
-#}
+variable "instance_shape_config_memory_in_gbs" {
+  default = "1"
+}
+variable "instance_shape_config_ocpus" {
+  default = "1"
+}
 
-
+variable "oracle_api_private_key_password" {
+	default = ""
+}
 variable "instance_image_ocid" {
   type = map
 
@@ -54,7 +57,8 @@ variable "instance_image_ocid" {
 	  ap-tokyo-1	      =  "ocid1.image.oc1.ap-tokyo-1.aaaaaaaaujexdiiybgjpta5czn6qzkjhdmzvrt64m6dngpny7yoqy23dwf2a"
 	  ca-montreal-1	    = "ocid1.image.oc1.ca-montreal-1.aaaaaaaatorxo3mpswbruc2wk24lgv5znagzpqczhh3gwunt2ljiq2dsovgq"
 	  ca-toronto-1	    = "ocid1.image.oc1.ca-toronto-1.aaaaaaaac52yuec55vat2che3dhwagoi6nnsxufctjqxxhxoacr6oz7w54za"
-	  eu-amsterdam-1	  = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaa5jnianfpmvc7gv4g6mi3iukc6qnzunjon25wm4gb3papjeckutrq"
+	  eu-amsterdam-1	  = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaaw5ln7altavlh4ioefojyhbf2fofbpzj4qw77nty23tzjhwz4exba"
+	#   eu-amsterdam-1      = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaa72byfaddfn2wkdhhtgb7c7jjh5jfvri63vumfrafo2tvhdsny3pq"
 	  eu-frankfurt-1	  = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaf7nfsg56na6qq76pt7khlhdyoda6ocn2d2lfs2i4y2qgg4nkwfqq"
 	  eu-marseille-1	  = "ocid1.image.oc1.eu-marseille-1.aaaaaaaae4dahq5mm2payyecoxtgljqkhendlkqu7h2nvjmvral6kydn5fja"
 	  eu-milan-1	      = "ocid1.image.oc1.eu-milan-1.aaaaaaaaolrnq6vejdpeqgj6rkdo2lcip3lfkzi4th7xahdc4bvr7j4aypga"

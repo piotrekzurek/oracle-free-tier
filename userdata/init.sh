@@ -43,7 +43,6 @@ sudo hostnamectl hostname zurek.top &&
 export PUBLIC_IP=$(curl ident.me) &&
 sudo sh -c "echo '$PUBLIC_IP zurek.top zurek' >> /etc/hosts" &&
 sudo sh -c "echo 'Port 818' >> /etc/ssh/sshd_config" &&
-sudo iptables -I INPUT -p tcp -m tcp --dport 818 -j ACCEPT &&
 sudo systemctl restart ssh &&
 sudo userdel -f -r ubuntu &&
 sudo userdel -f -r opc &&

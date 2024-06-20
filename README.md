@@ -1,13 +1,13 @@
-# Oracle Free Tier WireHole
-Wirehole is a combination of pihole, wireguard, and unbound wrapped in a handy docker-compose package.
+# Oracle Free Tier zurek
+zurek is a combination of pihole, wireguard, and unbound wrapped in a handy docker-compose package.
 
 ## Installation
 
 Basic Usage:
 
 ```bash
-$ git clone https://github.com/IAmStoxe/oracle-free-tier-wirehole.git
-$ cd oracle-free-tier-wirehole
+$ git clone https://github.com/IAmStoxe/oracle-free-tier-zurek.git
+$ cd oracle-free-tier-zurek
 
 ```
 
