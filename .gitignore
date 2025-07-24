@@ -3,3 +3,5 @@
 *.tfvars
 *.pem
 crash.log
+cloudflare_dns_records.json
+cloudflare_dns_records.txt

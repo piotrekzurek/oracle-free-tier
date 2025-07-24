@@ -1,51 +1,42 @@
-provider "oci" {
-  tenancy_ocid          = var.tenancy_ocid
-  user_ocid             = var.user_ocid
-  fingerprint           = var.oracle_api_key_fingerprint
-  private_key_path      = var.oracle_api_private_key_path
-#  private_key_password  = var.oracle_api_private_key_password
-  region                = var.region
+resource "oci_core_vcn" "vcn" {
+  cidr_block     = var.oracle_oci_vcn_cidr_block
+  compartment_id = var.oracle_oci_compartment_ocid
+  display_name   = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "vcn"])}" 
+  dns_label      = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "vcn"])}" 
 }
 
-resource "oci_core_vcn" "zurek_vcn" {
-  cidr_block     = var.vcn_cidr_block
-  compartment_id = var.compartment_ocid
-  display_name   = "zurekVCN"
-  dns_label      = "zurekVCN"
-}
-
-resource "oci_core_subnet" "zurek_subnet" {
+resource "oci_core_subnet" "subnet" {
   availability_domain = data.oci_identity_availability_domain.ad.name
   cidr_block          = "10.1.0.0/24"
-  display_name        = "zurekSubnet"
-  dns_label           = "zurekSubnet"
-  security_list_ids   = [oci_core_security_list.zurek_security_list.id]
-  compartment_id      = var.compartment_ocid
-  vcn_id              = oci_core_vcn.zurek_vcn.id
-  route_table_id      = oci_core_vcn.zurek_vcn.default_route_table_id
-  dhcp_options_id     = oci_core_vcn.zurek_vcn.default_dhcp_options_id
+  display_name        = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "subnet"])}"
+  dns_label           = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "subnet"])}" 
+  security_list_ids   = [oci_core_security_list.security_list.id]
+  compartment_id      = var.oracle_oci_compartment_ocid
+  vcn_id              = oci_core_vcn.vcn.id
+  route_table_id      = oci_core_vcn.vcn.default_route_table_id
+  dhcp_options_id     = oci_core_vcn.vcn.default_dhcp_options_id
 }
 
-resource "oci_core_internet_gateway" "zurek_internet_gateway" {
-  compartment_id = var.compartment_ocid
-  display_name   = "zurek_IG"
-  vcn_id         = oci_core_vcn.zurek_vcn.id
+resource "oci_core_internet_gateway" "internet_gateway" {
+  compartment_id = var.oracle_oci_compartment_ocid
+  display_name   = "${join("_", [replace(var.oracle_oci_instance_display_name, ".", "_"), replace(var.cloudflare_domain_name, ".", "_"), "ig"])}"
+  vcn_id         = oci_core_vcn.vcn.id
 }
 
-resource "oci_core_default_route_table" "test_route_table" {
-  manage_default_resource_id = oci_core_vcn.zurek_vcn.default_route_table_id
+resource "oci_core_default_route_table" "route_table" {
+  manage_default_resource_id = oci_core_vcn.vcn.default_route_table_id
 
   route_rules {
     destination       = "0.0.0.0/0"
     destination_type  = "CIDR_BLOCK"
-    network_entity_id = oci_core_internet_gateway.zurek_internet_gateway.id
+    network_entity_id = oci_core_internet_gateway.internet_gateway.id
   }
 }
 
-resource "oci_core_security_list" "zurek_security_list" {
-  compartment_id = var.compartment_ocid
-  vcn_id         = oci_core_vcn.zurek_vcn.id
-  display_name   = "zurek Security List"
+resource "oci_core_security_list" "security_list" {
+  compartment_id = var.oracle_oci_compartment_ocid
+  vcn_id         = oci_core_vcn.vcn.id
+  display_name   = "${join("_", [replace(var.oracle_oci_instance_display_name, ".", "_"), replace(var.cloudflare_domain_name, ".", "_"), "security_list"])}"
 
   // allow outbound tcp traffic on all ports
   egress_security_rules {
@@ -88,7 +79,22 @@ resource "oci_core_security_list" "zurek_security_list" {
       max = 818
     }
   }
+  ingress_security_rules {
+    protocol  = "6" // tcp
+    source    = "0.0.0.0/0"
+    stateless = false
 
+    tcp_options {
+      source_port_range {
+        min = 1
+        max = 65535
+      }
+
+      // These values correspond to the destination port range.
+      min = 22
+      max = 22
+    }
+  }
   // allow inbound http traffic from a all ports to port
   ingress_security_rules {
     protocol  = "6" // tcp
@@ -229,33 +235,33 @@ resource "oci_core_security_list" "zurek_security_list" {
   }
 }
 
-resource "oci_core_instance" "zurek_instance" {
+resource "oci_core_instance" "instance" {
   availability_domain = data.oci_identity_availability_domain.ad.name
-  compartment_id      = var.compartment_ocid
-  display_name        = var.instance_display_name
-  shape               = var.instance_shape
+  compartment_id      = var.oracle_oci_compartment_ocid
+  display_name        = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "instance"])}"
+  shape               = var.oracle_oci_instance_shape
 
   create_vnic_details {
-    subnet_id        = oci_core_subnet.zurek_subnet.id
-    display_name     = "zurekVNIC"
+    subnet_id        = oci_core_subnet.subnet.id
+    display_name     = "${join("", [replace(var.oracle_oci_instance_display_name, ".", ""), "vnic"])}"
     assign_public_ip = true
-    hostname_label   = var.instance_display_name
+    hostname_label   = "${join("", [replace(var.oracle_oci_instance_display_name, ".", "")])}"
   }
 
   shape_config {
     #Optional
-    memory_in_gbs = var.instance_shape_config_memory_in_gbs
-    ocpus = var.instance_shape_config_ocpus
+    memory_in_gbs = var.oracle_oci_instance_shape_config_memory_in_gbs
+    ocpus = var.oracle_oci_instance_shape_config_ocpus
   }
 
   
   source_details {
     source_type = "image"
-    source_id   = var.instance_image_ocid[var.region]
+    source_id   = var.oracle_oci_instance_image_ocid[var.oracle_oci_region]
   }
 
   metadata = {
-    ssh_authorized_keys = var.ssh_public_key
+    ssh_authorized_keys = var.oracle_oci_ssh_public_key
     user_data           = base64encode(file("./userdata/init.sh"))
   }
 
@@ -265,15 +271,15 @@ resource "oci_core_instance" "zurek_instance" {
 }
 
 data "oci_identity_availability_domain" "ad" {
-  compartment_id = var.compartment_ocid
-  ad_number      = var.availability_domain_number
+  compartment_id = var.oracle_oci_compartment_ocid
+  ad_number      = var.oracle_oci_availability_domain_number
 }
 
 # Gets a list of vNIC attachments on the instance
 data "oci_core_vnic_attachments" "instance_vnics" {
-  compartment_id      = var.compartment_ocid
+  compartment_id      = var.oracle_oci_compartment_ocid
   availability_domain = data.oci_identity_availability_domain.ad.name
-  instance_id         = oci_core_instance.zurek_instance.id
+  instance_id         = oci_core_instance.instance.id
 }
 
 # Gets the OCID of the first (default) vNIC
@@ -281,45 +287,8 @@ data "oci_core_vnic" "instance_vnic" {
   vnic_id = lookup(data.oci_core_vnic_attachments.instance_vnics.vnic_attachments[0], "vnic_id")
 }
 
-provider "cloudflare" {
-  api_token = "5ofQJueFTxjYS1M82hASZ6Lxx9NXGM_YkSF5dVKy"
-}
-
-resource "cloudflare_record" "oracle_zurek_top" {
-  zone_id = "cc652262a61cb416da93a33ff59c9f9d"
-  name    = "oracle.zurek.top"
-  value   = "${oci_core_instance.zurek_instance.public_ip}"
-  type    = "A"
-  proxied = false
-  allow_overwrite = true
-}
-
-resource "cloudflare_record" "wildcard_oracle_zurek_top" {
-  zone_id = "cc652262a61cb416da93a33ff59c9f9d"
-  name    = "*.oracle.zurek.top"
-  value   = "${oci_core_instance.zurek_instance.public_ip}"
-  type    = "A"
-  proxied = false
-  allow_overwrite = true
-}
 
 
-resource "cloudflare_record" "zurek_top" {
-  zone_id = "cc652262a61cb416da93a33ff59c9f9d"
-  name    = "zurek.top"
-  value   = "${oci_core_instance.zurek_instance.public_ip}"
-  type    = "A"
-  proxied = false
-  allow_overwrite = true
-}
-resource "cloudflare_record" "wildcard_zurek_top" {
-  zone_id = "cc652262a61cb416da93a33ff59c9f9d"
-  name    = "*.zurek.top"
-  value   = "${oci_core_instance.zurek_instance.public_ip}"
-  type    = "A"
-  proxied = false
-  allow_overwrite = true
-}
 # resource "oci_core_instance_console_connection" "zurek_instance_console_connection" {
 #   #Required
 #   instance_id = oci_core_instance.zurek_instance.id
